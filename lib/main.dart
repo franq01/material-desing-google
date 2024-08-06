@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-
-import 'animations.dart'; // Add this import
+import 'animations.dart';
 import 'models/data.dart' as data;
 import 'models/models.dart';
-import 'widgets/animated_floating_action_button.dart'; // Add this import
+import 'transitions/list_detail_transition.dart';
+import 'widgets/animated_floating_action_button.dart';
 import 'widgets/disappearing_bottom_navigation_bar.dart';
 import 'widgets/disappearing_navigation_rail.dart';
 import 'widgets/email_list_view.dart';
+import 'widgets/reply_list_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,12 +37,10 @@ class Feed extends StatefulWidget {
   State<Feed> createState() => _FeedState();
 }
 
-// Add SingleTickerProviderStateMixin to _FeedState
 class _FeedState extends State<Feed> with SingleTickerProviderStateMixin {
   late final _colorScheme = Theme.of(context).colorScheme;
   late final _backgroundColor = Color.alphaBlend(
       _colorScheme.primary.withOpacity(0.14), _colorScheme.surface);
-  // Add from here...
   late final _controller = AnimationController(
       duration: const Duration(milliseconds: 1000),
       reverseDuration: const Duration(milliseconds: 1250),
@@ -50,19 +49,15 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin {
   late final _railAnimation = RailAnimation(parent: _controller);
   late final _railFabAnimation = RailFabAnimation(parent: _controller);
   late final _barAnimation = BarAnimation(parent: _controller);
-  // ... to here.
 
   int selectedIndex = 0;
-  // Remove wideScreen
-  bool controllerInitialized = false; // Add this variable
+  bool controllerInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     final double width = MediaQuery.of(context).size.width;
-    // Remove wideScreen reference
-    // Add from here ...
     final AnimationStatus status = _controller.status;
     if (width > 600) {
       if (status != AnimationStatus.forward &&
@@ -79,20 +74,16 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin {
       controllerInitialized = true;
       _controller.value = width > 600 ? 1 : 0;
     }
-    // ... to here.
   }
 
-  // Add from here ...
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-  // ... to here.
 
   @override
   Widget build(BuildContext context) {
-    // Modify from here ...
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
@@ -113,14 +104,18 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin {
               Expanded(
                 child: Container(
                   color: _backgroundColor,
-                  child: EmailListView(
-                    selectedIndex: selectedIndex,
-                    onSelected: (index) {
-                      setState(() {
-                        selectedIndex = index;
-                      });
-                    },
-                    currentUser: widget.currentUser,
+                  child: ListDetailTransition(
+                    animation: _railAnimation,
+                    one: EmailListView(
+                      selectedIndex: selectedIndex,
+                      onSelected: (index) {
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                      },
+                      currentUser: widget.currentUser,
+                    ),
+                    two: const ReplyListView(),
                   ),
                 ),
               ),
@@ -143,6 +138,5 @@ class _FeedState extends State<Feed> with SingleTickerProviderStateMixin {
         );
       },
     );
-    // ... to here.
   }
 }
